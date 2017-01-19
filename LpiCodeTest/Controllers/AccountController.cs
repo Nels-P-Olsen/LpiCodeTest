@@ -75,12 +75,22 @@ namespace LpiCodeTest.Controllers
 
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+            var result = await SignInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
                 case SignInStatus.Success:
-                    return RedirectToLocal(returnUrl);
-                case SignInStatus.LockedOut:
+					// KLUDGE: We're taking a basic approach here by using an IsAdministrator flag.
+					// TODO: In a real applicaiton, use AspNetUserRoles.
+					var user = await SignInManager.UserManager.FindAsync(model.UserName, model.Password);
+					if (user.IsAdministrator)
+					{
+						return RedirectToAction("Register", "Account");
+					}
+
+					// This should already be set up to go to the Home page
+					return RedirectToLocal(returnUrl);
+					
+				case SignInStatus.LockedOut:
                     return View("Lockout");
                 case SignInStatus.RequiresVerification:
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
@@ -151,19 +161,31 @@ namespace LpiCodeTest.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+                var user = new ApplicationUser
+				{
+					UserName = model.UserName,
+					Email = model.Email,
+					PhoneNumber = model.PhoneNumber,
+					FirstName = model.FirstName,
+					LastName = model.LastName,
+					DriversLicenseNumber = model.DriversLicenseNumber,
+					CarMake = model.CarMake,
+					CarModel = model.CarModel,
+					IsAdministrator = model.IsAdministrator
+				};
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
+                //  await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
                     
                     // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
                     // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
                     // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
                     // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+				//	return RedirectToAction("Index", "Home");
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Register", "Account");
                 }
                 AddErrors(result);
             }
@@ -248,7 +270,7 @@ namespace LpiCodeTest.Controllers
             {
                 return View(model);
             }
-            var user = await UserManager.FindByNameAsync(model.Email);
+            var user = await UserManager.FindByNameAsync(model.UserName);
             if (user == null)
             {
                 // Don't reveal that the user does not exist

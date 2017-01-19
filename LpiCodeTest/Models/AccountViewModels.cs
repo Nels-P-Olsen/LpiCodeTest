@@ -6,7 +6,8 @@ namespace LpiCodeTest.Models
     public class ExternalLoginConfirmationViewModel
     {
         [Required]
-        [Display(Name = "Email")]
+		[EmailAddress]
+		[Display(Name = "Email Address")]
         public string Email { get; set; }
     }
 
@@ -31,7 +32,8 @@ namespace LpiCodeTest.Models
         [Required]
         [Display(Name = "Code")]
         public string Code { get; set; }
-        public string ReturnUrl { get; set; }
+
+		public string ReturnUrl { get; set; }
 
         [Display(Name = "Remember this browser?")]
         public bool RememberBrowser { get; set; }
@@ -42,16 +44,16 @@ namespace LpiCodeTest.Models
     public class ForgotViewModel
     {
         [Required]
-        [Display(Name = "Email")]
+		[EmailAddress]
+		[Display(Name = "Email Address")]
         public string Email { get; set; }
     }
 
     public class LoginViewModel
     {
         [Required]
-        [Display(Name = "Email")]
-        [EmailAddress]
-        public string Email { get; set; }
+        [Display(Name = "User Name")]
+        public string UserName { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
@@ -64,12 +66,44 @@ namespace LpiCodeTest.Models
 
     public class RegisterViewModel
     {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
+		[Required]
+		[Display(Name = "User Name")]
+		public string UserName { get; set; }
 
-        [Required]
+		[Required]
+		[Display(Name = "First Name")]
+		public string FirstName { get; set; }
+
+		[Required]
+		[Display(Name = "Last Name")]
+		public string LastName { get; set; }
+
+		[Required]
+		[EmailAddress]
+		[Display(Name = "Email Address")]
+		public string Email { get; set; }
+
+		[Required]
+		[Display(Name = "Driver's License Number")]
+		public string DriversLicenseNumber { get; set; }
+
+		[Required]
+		[Phone]
+		[Display(Name = "Phone Number")]
+		public string PhoneNumber { get; set; }
+
+		[Required]
+		[Display(Name = "Car Make")]
+		public string CarMake { get; set; }
+
+		[Required]
+		[Display(Name = "Car Model")]
+		public string CarModel { get; set; }
+
+		[Display(Name = "Is Administrator")]
+		public bool IsAdministrator { get; set; }
+
+		[Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
         [DataType(DataType.Password)]
         [Display(Name = "Password")]
@@ -84,9 +118,8 @@ namespace LpiCodeTest.Models
     public class ResetPasswordViewModel
     {
         [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
+        [Display(Name = "User Name")]
+        public string UserName { get; set; }
 
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
@@ -106,7 +139,7 @@ namespace LpiCodeTest.Models
     {
         [Required]
         [EmailAddress]
-        [Display(Name = "Email")]
+        [Display(Name = "Email Address")]
         public string Email { get; set; }
     }
 }
