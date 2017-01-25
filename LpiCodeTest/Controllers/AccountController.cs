@@ -9,6 +9,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using LpiCodeTest.Models;
+using System.Collections.Generic;
 
 namespace LpiCodeTest.Controllers
 {
@@ -52,6 +53,38 @@ namespace LpiCodeTest.Controllers
             }
         }
 
+		private ApplicationUser _currentUser;
+		public ApplicationUser CurrentUser
+		{
+			get
+			{
+				return _currentUser ?? UserManager.FindById(System.Web.HttpContext.Current.User.Identity.GetUserId());
+			}
+			set
+			{
+				_currentUser = value;
+			}
+		}
+
+		public bool IsCurrentUserAdministrator
+		{
+			get
+			{
+				if (System.Web.HttpContext.Current.User == null) return false;
+				// KLUDGE: We're taking a basic approach here by using an IsAdministrator flag.
+				// TODO: In a real applicaiton, use AspNetUserRoles.
+				return CurrentUser.IsAdministrator;
+			}
+		}
+
+		private void RequireAdministrator()
+		{
+			if (!IsCurrentUserAdministrator)
+			{
+				throw new UnauthorizedAccessException("Administrator access required");
+			}
+		}
+
         //
         // GET: /Account/Login
         [AllowAnonymous]
@@ -79,12 +112,10 @@ namespace LpiCodeTest.Controllers
             switch (result)
             {
                 case SignInStatus.Success:
-					// KLUDGE: We're taking a basic approach here by using an IsAdministrator flag.
-					// TODO: In a real applicaiton, use AspNetUserRoles.
-					var user = await SignInManager.UserManager.FindAsync(model.UserName, model.Password);
-					if (user.IsAdministrator)
+					_currentUser = await UserManager.FindByNameAsync(model.UserName);
+					if (IsCurrentUserAdministrator)
 					{
-						return RedirectToAction("Register", "Account");
+						return RedirectToAction("List", "Account");
 					}
 
 					// This should already be set up to go to the Home page
@@ -144,22 +175,66 @@ namespace LpiCodeTest.Controllers
             }
         }
 
-        //
-        // GET: /Account/Register
-        [AllowAnonymous]
-        public ActionResult Register()
+		//
+		// GET: /Account/List
+		public ActionResult List()
+		{
+			if (!this.CurrentUser.IsAdministrator)
+			{
+				return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+			}
+
+			var users = UserManager.Users.ToList();
+			return View(ToListViewModels(users));
+		}
+
+		private IList<ListViewModel> ToListViewModels(IEnumerable<ApplicationUser> users)
+		{
+			var viewModels = new List<ListViewModel>();
+
+			foreach (var user in users)
+			{
+				viewModels.Add(new ListViewModel
+				{
+					UserName = user.UserName,
+					FirstName = user.FirstName,
+					LastName = user.LastName,
+					Email = user.Email,
+					PhoneNumber = user.PhoneNumber,
+					DriversLicenseNumber = user.DriversLicenseNumber,
+					CarMake = user.CarMake,
+					CarModel = user.CarModel,
+					IsAdministrator = user.IsAdministrator
+				});
+			}
+
+			return viewModels;
+		}
+
+		//
+		// GET: /Account/Register
+		public ActionResult Register()
         {
+			if (!this.CurrentUser.IsAdministrator)
+			{
+				return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+			}
+
             return View();
         }
 
         //
         // POST: /Account/Register
         [HttpPost]
-        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Register(RegisterViewModel model)
         {
-            if (ModelState.IsValid)
+			if (!this.CurrentUser.IsAdministrator)
+			{
+				return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+			}
+
+			if (ModelState.IsValid)
             {
                 var user = new ApplicationUser
 				{
@@ -185,7 +260,7 @@ namespace LpiCodeTest.Controllers
                     // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
 				//	return RedirectToAction("Index", "Home");
 
-                    return RedirectToAction("Register", "Account");
+                    return RedirectToAction("List", "Account");
                 }
                 AddErrors(result);
             }
@@ -194,9 +269,15 @@ namespace LpiCodeTest.Controllers
             return View(model);
         }
 
-        //
-        // GET: /Account/ConfirmEmail
-        [AllowAnonymous]
+		public ActionResult Delete(string userName)
+		{
+			UserManager.Delete(UserManager.FindByName(userName));
+			return RedirectToAction("List", "Account");
+		}
+
+		//
+		// GET: /Account/ConfirmEmail
+		[AllowAnonymous]
         public async Task<ActionResult> ConfirmEmail(string userId, string code)
         {
             if (userId == null || code == null)

@@ -64,7 +64,39 @@ namespace LpiCodeTest.Models
         public bool RememberMe { get; set; }
     }
 
-    public class RegisterViewModel
+	public class ListViewModel
+	{
+		[Display(Name = "User Name")]
+		public string UserName { get; set; }
+
+		[Display(Name = "First Name")]
+		public string FirstName { get; set; }
+
+		[Display(Name = "Last Name")]
+		public string LastName { get; set; }
+
+		[EmailAddress]
+		[Display(Name = "Email Address")]
+		public string Email { get; set; }
+
+		[Display(Name = "Driver's License Number")]
+		public string DriversLicenseNumber { get; set; }
+
+		[Phone]
+		[Display(Name = "Phone Number")]
+		public string PhoneNumber { get; set; }
+
+		[Display(Name = "Car Make")]
+		public string CarMake { get; set; }
+
+		[Display(Name = "Car Model")]
+		public string CarModel { get; set; }
+
+		[Display(Name = "Is Administrator")]
+		public bool IsAdministrator { get; set; }
+	}
+
+	public class RegisterViewModel
     {
 		[Required]
 		[Display(Name = "User Name")]

@@ -41,5 +41,5 @@ namespace LpiCodeTest.Models
         {
             return new ApplicationDbContext();
         }
-    }
+	}
 }
