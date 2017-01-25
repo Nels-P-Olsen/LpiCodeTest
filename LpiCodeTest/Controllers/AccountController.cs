@@ -71,6 +71,9 @@ namespace LpiCodeTest.Controllers
 			get
 			{
 				if (System.Web.HttpContext.Current.User == null) return false;
+				var currentUser = CurrentUser;
+				if (currentUser == null) return false;
+
 				// KLUDGE: We're taking a basic approach here by using an IsAdministrator flag.
 				// TODO: In a real applicaiton, use AspNetUserRoles.
 				return CurrentUser.IsAdministrator;
@@ -179,7 +182,7 @@ namespace LpiCodeTest.Controllers
 		// GET: /Account/List
 		public ActionResult List()
 		{
-			if (!this.CurrentUser.IsAdministrator)
+			if (!this.IsCurrentUserAdministrator)
 			{
 				return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
 			}
@@ -215,9 +218,12 @@ namespace LpiCodeTest.Controllers
 		// GET: /Account/Register
 		public ActionResult Register()
         {
-			if (!this.CurrentUser.IsAdministrator)
+			if (!this.IsCurrentUserAdministrator)
 			{
-				return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+				if (UserManager.Users.Count() > 0)
+				{
+					return new HttpStatusCodeResult(System.Net.HttpStatusCode.Unauthorized);
+				}
 			}
 
             return View();
